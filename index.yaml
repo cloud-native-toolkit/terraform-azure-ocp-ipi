@@ -1,0 +1,9 @@
+name: azure-ocp-ipi
+type: terraform
+description: Module to provision ocp-ipi on azure
+tags:
+  - tools
+  - devops
+versions: []
+cloudProvider: azure
+id: github.com/cloud-native-toolkit/terraform-azure-ocp-ipi
