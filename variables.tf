@@ -1,6 +1,8 @@
-#variable "myvariable" {
-#  type        = string
-#  description = "A description of my variable"
-#  default     = ""
-#}
+
+
+variable "openshift_ssh_key" {
+  description = "SSH Public Key to use for OpenShift Installation"
+  type        = string
+  default     = ""
+}
 

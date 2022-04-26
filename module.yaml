@@ -1,11 +1,40 @@
 name: azure-ocp-ipi
 type: terraform
-description: Module to provision ocp-ipi on azure
+description: Module to provision an OpenShift Installer-Provisioned Infrastructure on Azure
 tags:
-  - tools
-  - devops
+  - azure
+  - openshift
 versions:
   - platforms: []
-    dependencies: []
-    variables: []
+    providers: 
+      - name: azurerm
+        source: "hashicorp/azurerm"
+    dependencies:
+      - id: resource_group
+        refs:
+          - source: github.com/cloud-native-toolkit/terraform-azure-resource-group
+            version: ">= 1.0.0"
+      - id: virtual_network
+        refs:
+          - source: github.com/cloud-native-toolkit/terraform-azure-vpc
+            version: ">= 1.0.1"
+      - id: subnets
+        refs:
+          - source: github.com/cloud-native-toolkit/terraform-azure-subnets
+            version: ">= 1.2.0"
+      - id: load_balancers
+        refs: 
+          - source: github.com/cloud-native-toolkit/terraform-azure-lb
+            version: ">= 0.0.5"
+      - id: sync
+        refs: []
+        interface: github.com/cloud-native-toolkit/automation-modules#sync
+        optional: true
+    variables:
+      - name: resource_group_name
+        moduleRef:
+          id: resource_group
+          output: name
+      - name: region
+        scope: global
 cloudProvider: azure
