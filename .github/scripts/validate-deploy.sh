@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 
-BIN_DIR=$(cat .bin_dir)
+ENABLED=$(cat .enabled)
 
-export PATH="${BIN_DIR}:${PATH}"
-
-if ! command -v ibmcloud 1> /dev/null 2> /dev/null; then
-  echo "ibmcloud cli not found" >&2
-  exit 1
+if [[ "${ENABLED}" == "false" ]]; then
+  echo "The resource group is not enabled."
 fi
 
-echo "Implement validation logic"
-exit 1
+echo "Terraform state:"
+terraform state list

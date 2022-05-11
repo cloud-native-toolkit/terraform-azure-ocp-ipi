@@ -16,16 +16,12 @@ versions:
             version: ">= 1.0.0"
       - id: virtual_network
         refs:
-          - source: github.com/cloud-native-toolkit/terraform-azure-vpc
+          - source: github.com/cloud-native-toolkit/terraform-azure-vnet
             version: ">= 1.0.1"
       - id: subnets
         refs:
           - source: github.com/cloud-native-toolkit/terraform-azure-subnets
             version: ">= 1.2.0"
-      - id: load_balancers
-        refs: 
-          - source: github.com/cloud-native-toolkit/terraform-azure-lb
-            version: ">= 0.0.5"
       - id: sync
         refs: []
         interface: github.com/cloud-native-toolkit/automation-modules#sync
