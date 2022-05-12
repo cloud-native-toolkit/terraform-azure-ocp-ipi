@@ -73,10 +73,10 @@ variable "install_path" {
     default     = "./install"
 }
 
-variable "installer_url" {
-    description = "Base URL for OpenShift installer and CLI"
+variable "binary_url_base" {
+    description = "Base URL for OpenShift installer and CLI binaries"
     type        = string
-    default     = "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/"
+    default     = "https://mirror.openshift.com/pub/openshift-v4"
 }
 
 

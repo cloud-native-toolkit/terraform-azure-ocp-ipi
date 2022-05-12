@@ -2,6 +2,7 @@
 locals {
   cluster_id = "${random_string.cluster_id.result}"
   cluster_name = "${var.name_prefix}-${local.cluster_id}"
+  base_domain = "${local.cluster_name}.${var.base_domain}"
   tags = merge(
     {
       "kubernetes.io_cluster.${local.cluster_name}" = "owned"
@@ -10,7 +11,6 @@ locals {
   )
   major_version     = join(".", slice(split(".", var.openshift_version), 0, 2))
   install_path      = var.install_path == "./install" ? "${path.root}/install" : var.install_path
-  installer_url     = "${var.installer_url}/${var.openshift_version}/"
 }
 
 // Create a random string of 5 lowercase letters for the cluster id
@@ -22,10 +22,9 @@ resource "random_string" "cluster_id" {
 
 // Configure DNS records
 resource "azurerm_dns_zone" "ocp" {
-  name = var.base_domain
+  name = local.base_domain
   resource_group_name = var.resource_group_name
 }
-
 
 // Ensure roles are assigned
 
@@ -44,13 +43,34 @@ resource "azurerm_role_assignment" "main" {
 
 */
 
+// *****
+// Add Azure details and credentials to ~/.azure/osServicePrincipal.json
+
+
 // Download the installer and cli
+resource "null_resource" "binary_download" {
+  provisioner "local-exec" {
+    when = create
+    command = templatefile("${path.module}/templates/cli-download.sh.tftpl", {
+        binary_path = "binaries"
+        binary_url = var.binary_url_base
+        ocp_version = var.openshift_version
+    })
+  
+  }
+
+  provisioner "local-exec" {
+    when = destroy
+    command = "rm -rf ${path.root}/binaries"
+  }
+}
+
 
 // Create the install-config.yaml file
 resource "local_file" "install_config" {
   content  = templatefile("${path.module}/templates/install_config.tftpl", {
       cluster_name = local.cluster_name,
-      base_domain = var.base_domain,
+      base_domain = local.base_domain,
       credentials_mode = var.credentials_mode,
       master_hyperthreading = var.master_hyperthreading,
       master_node_disk_size = var.master_node_disk_size,
