@@ -26,25 +26,20 @@ resource "azurerm_dns_zone" "ocp" {
   resource_group_name = var.resource_group_name
 }
 
+// TODO
 // Ensure roles are assigned
 
-/*
-resource "azurerm_user_assigned_identity" "main" {
-  name                = "${local.cluster_name}-identity"
-  resource_group_name = var.resource_group_name
-  location            = var.region
+// Add Azure credentials to config file
+resource "local_file" "azure_config" {
+  content = templatefile("${path.module}/templates/osServicePrincipal.json.tftpl",{
+      subscription_id = var.subscription_id,
+      client_id = var.client_id,
+      client_secret = var.client_secret,
+      tenant_id = var.tenant_id
+  })
+  filename = pathexpand("~/.azure/osServicePrincipal.json")
+  file_permission = "0600"
 }
-
-resource "azurerm_role_assignment" "main" {
-  scope     = var.resource_group_id
-  role_definition_name = "Contributer"
-  principal_id = azurerm_user_assigned_identity.main.principal_id
-}
-
-*/
-
-// *****
-// Add Azure details and credentials to ~/.azure/osServicePrincipal.json
 
 
 // Download the installer and cli
@@ -99,6 +94,7 @@ resource "local_file" "install_config" {
       public_ssh_key = var.openshift_ssh_key
       })
   filename = "${local.install_path}/install-config.yaml"
+  file_permission = "0664"
 }
 
 // Run openshift-installer and clean up bootstrap
