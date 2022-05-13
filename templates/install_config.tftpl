@@ -38,16 +38,16 @@ networking:
   - ${service_network_cidr}
 platform:
   azure:
-    ## Below needs to be modified to the BYO DNS name
     baseDomainResourceGroupName: ${resource_group_name}   
     region: ${region} 
-    resourceGroupName: ${resource_group_name} 
+    outboundType: ${outbound_type}
+    cloudName: AzurePublicCloud
+%{ if existing_network == true } 
     networkResourceGroupName: ${network_resource_group_name} 
     virtualNetwork: ${vnet_name} 
     controlPlaneSubnet: ${master_subnet_name} 
     computeSubnet: ${worker_subnet_name} 
-    outboundType: ${outbound_type}
-    cloudName: AzurePublicCloud
+%{ endif }
 pullSecret: '${pull_secret}' 
 fips: ${enable_fips} 
 sshKey: ${public_ssh_key} 

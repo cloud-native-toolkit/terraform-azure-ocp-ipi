@@ -1,8 +1,9 @@
 
 locals {
-  cluster_id = "${random_string.cluster_id.result}"
-  cluster_name = "${var.name_prefix}-${local.cluster_id}"
-  base_domain = "${local.cluster_name}.${var.base_domain}"
+  # Cluster id only needed for UPI
+  # cluster_id = "${random_string.cluster_id.result}"
+  cluster_name = var.name_prefix
+  base_domain = var.base_domain
   tags = merge(
     {
       "kubernetes.io_cluster.${local.cluster_name}" = "owned"
@@ -14,17 +15,22 @@ locals {
 }
 
 // Create a random string of 5 lowercase letters for the cluster id
+// Only required for UPI
+/*
 resource "random_string" "cluster_id" {
   length = 5
   special = false
   upper = false
 }
+*/
 
 // Configure DNS records
+/*
 resource "azurerm_dns_zone" "ocp" {
   name = local.base_domain
-  resource_group_name = var.resource_group_name
+  resource_group_name = var.network_resource_group_name
 }
+*/
 
 // TODO
 // Ensure roles are assigned
@@ -62,8 +68,10 @@ resource "null_resource" "binary_download" {
 
 
 // Create the install-config.yaml file
+
 resource "local_file" "install_config" {
   content  = templatefile("${path.module}/templates/install_config.tftpl", {
+      existing_network = var.network_resource_group_name != "" ? true : false,
       cluster_name = local.cluster_name,
       base_domain = local.base_domain,
       credentials_mode = var.credentials_mode,
@@ -98,3 +106,23 @@ resource "local_file" "install_config" {
 }
 
 // Run openshift-installer and clean up bootstrap
+
+resource "null_resource" "openshift-install" {
+  depends_on = [
+      local_file.install_config,
+      null_resource.binary_download,
+      local_file.azure_config
+  ]
+
+  provisioner "local-exec" {
+    when = create
+    command = "${path.root}/binaries/openshift-install create cluster --dir ${path.root}/install/"
+    # command = "echo ${path.root}/binaries/openshift-install create cluster --dir ${path.root}/install/"  
+  }
+
+  provisioner "local-exec" {
+    when = destroy
+    command = "${path.root}/binaries/openshift-install destroy cluster --dir ${path.root}/install/"
+    # command = "echo ${path.root}/binaries/openshift-install destroy cluster --dir ${path.root}/install/"
+  }
+}

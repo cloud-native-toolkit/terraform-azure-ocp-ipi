@@ -1,3 +1,4 @@
+
 variable "name_prefix" {
   description = "Prefix to use for all resources"
   type        = string
@@ -8,14 +9,10 @@ variable "resource_group_name" {
   type        = string
 }
 
-variable "resource_group_id" {
-  description = "Resource group id"
-  type        = string
-}
-
 variable "vnet_name" {
     description = "VNet name to deploy into"
     type        = string
+    default     = ""
 }
 
 variable "region" {
@@ -26,11 +23,13 @@ variable "region" {
 variable "master_subnet_name" {
     description = "Name of the master subnet"
     type        = string
+    default     = ""
 }
 
 variable "worker_subnet_name" {
     description = "Name of the worker subnet"
     type        = string
+    default     = ""
 }
 
 variable "openshift_version" {
@@ -90,12 +89,13 @@ variable "base_domain" {
 variable "credentials_mode" {
     description = "Type of Cloud Credential Operator to be utilized (default = Mint)"
     type = string
-    default = "Mint"
+    default = "Passthrough"
 }
 
 variable "network_resource_group_name" {
     description = "Name of the resource group for the network components (must be different to the overall resource group)"
     type        = string
+    default     = ""
 }
 
 variable "master_hyperthreading" {
