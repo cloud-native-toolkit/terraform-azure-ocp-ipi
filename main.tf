@@ -116,13 +116,13 @@ resource "null_resource" "openshift-install" {
 
   provisioner "local-exec" {
     when = create
-    command = "${path.root}/binaries/openshift-install create cluster --dir ${path.root}/install/"
+    command = "cd ${path.root}/install ; ${path.root}/binaries/openshift-install create cluster --dir ./"
     # command = "echo ${path.root}/binaries/openshift-install create cluster --dir ${path.root}/install/"  
   }
 
   provisioner "local-exec" {
     when = destroy
-    command = "${path.root}/binaries/openshift-install destroy cluster --dir ${path.root}/install/"
+    command = "cd {path.root}/install ; ${path.root}/binaries/openshift-install destroy cluster --dir ./"
     # command = "echo ${path.root}/binaries/openshift-install destroy cluster --dir ${path.root}/install/"
   }
 }
