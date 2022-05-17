@@ -1,8 +1,8 @@
 apiVersion: v1
 baseDomain: ${base_domain} 
-credentialsMode: ${credentials_mode}
 controlPlane: 
   hyperthreading: ${master_hyperthreading}   
+  architecture: ${master_architecture}
   name: master
   platform:
     azure:
@@ -17,6 +17,7 @@ controlPlane:
   replicas: ${master_node_qty}
 compute: 
 - hyperthreading: ${worker_hyperthreading} 
+  architecture: ${worker_architecture}
   name: worker
   platform:
     azure:
@@ -49,5 +50,9 @@ platform:
     computeSubnet: ${worker_subnet_name} 
 %{ endif }
 pullSecret: '${pull_secret}' 
-fips: ${enable_fips} 
+%{ if enable_fips == true }
+fips: true 
+%{ endif }
+%{ if public_ssh_key != "" }
 sshKey: ${public_ssh_key} 
+%{ endif }

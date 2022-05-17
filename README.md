@@ -1,31 +1,22 @@
-# Starter kit for a Terraform module
-
-This is a Starter kit to help with the creation of Terraform modules. The basic structure of a Terraform module is fairly
-simple and consists of the following basic values:
-
-- README.md - provides a description of the module
-- main.tf - defiens the logic for the module
-- variables.tf (optional) - defines the input variables for the module
-- outputs.tf (optional) - defines the values that are output from the module
-
-Beyond those files, any other content can be added and organized however you see fit. For example, you can add a `scripts/` directory
-that contains shell scripts executed by a `local-exec` `null_resource` in the terraform module. The contents will depend on what your
-module does and how it does it.
-
-## Instructions for creating a new module
-
-1. Update the title and description in the README to match the module you are creating
-2. Fill out the remaining sections in the README template as appropriate
-3. Implement your logic in the in the main.tf, variables.tf, and outputs.tf
-4. Use releases/tags to manage release versions of your module
+# Azure OpenShift with Installer Provisioned Infrastructure (IPI)
 
 ## Module overview
 
 ### Description
 
-Description of module
+Module creates an OpenShift cluster on Azure and either creates a new virtual network (VNet) or installs onto an existing virtual network if it is provided. 
 
 **Note:** This module follows the Terraform conventions regarding how provider configuration is defined within the Terraform template and passed into the module - https://www.terraform.io/docs/language/modules/develop/providers.html. The default provider configuration flows through to the module. If different configuration is required for a module, it can be explicitly passed in the `providers` block of the module - https://www.terraform.io/docs/language/modules/develop/providers.html#passing-providers-explicitly.
+
+### Prerequisites
+
+1. A service principal is required to create the cluster [instructions here](https://docs.openshift.com/container-platform/4.9/installing/installing_azure/installing-azure-account.html#installation-azure-service-principal_installing-azure-account)
+1. A public domain with wildcard capabilities delegated to Azure is required [instructions here](https://docs.openshift.com/container-platform/4.9/installing/installing_azure/installing-azure-account.html#installation-azure-network-config_installing-azure-account)
+1. Red Hat OpenShift pull secret from [can be obtained here](https://console.redhat.com/openshift/install/pull-secret)
+
+## Post installation
+
+Post installation it is necessary to add your own certificate to the cluster to access the console. module pending.
 
 ### Software dependencies
 
@@ -33,34 +24,58 @@ The module depends on the following software components:
 
 #### Command-line tools
 
-- terraform >= v0.15
+- terraform >= v1.1.9
 
 #### Terraform providers
 
-- IBM Cloud provider >= 1.5.3
+- Azure provider >= 2.91.0
 
-### Module dependencies
+### Module dependencies - new virtual network
+This module does not have any dependencies on other modules if it is creating a new virtual network.
 
-This module makes use of the output from other modules:
+### Module dependencies - existing virtual network
 
-- Cluster - github.com/cloud-native-toolkit/terraform-ibm-container-platform.git
-- Namespace - github.com/cloud-native-toolkit/terraform-cluster-namespace.git
-- etc
+This module makes use of the output from other modules when creating a custom virtual network:
+
+- Azure Resource group - github.com/cloud-native-toolkit/terraform-azure-resource-group
+- Azure VNet - github.com/cloud-native-toolkit/terraform-azure-vnet
+- Azure Subnets - github.com/cloud-native-toolkit/terraform-azure-subnets
 
 ### Example usage
 
 ```hcl-terraform
-module "argocd" {
-  source = "github.com/cloud-native-toolkit/terraform-tools-argocd.git"
-
-  cluster_config_file = module.dev_cluster.config_file_path
-  cluster_type        = module.dev_cluster.type
-  app_namespace       = module.dev_cluster_namespaces.tools_namespace_name
-  ingress_subdomain   = module.dev_cluster.ingress_hostname
-  olm_namespace       = module.dev_software_olm.olm_namespace
-  operator_namespace  = module.dev_software_olm.target_namespace
-  name                = "argocd"
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 2.91.0"
+    }
+  }
 }
+
+provider "azurerm" {
+  features {}
+
+  subscription_id = var.subscription_id
+  client_id       = var.client_id
+  client_secret   = var.client_secret
+  tenant_id       = var.tenant_id
+}
+
+module "ocp-ipi" {
+  source = "github.com/cloud-native-toolkit/terraform-azure-ocp-ipi"
+
+  name_prefix = var.ocp_cluster_prefix            # Name prefix for the OpenShift cluster
+  resource_group_name = var.resource_group_name   # Where base domain is stored
+  region = var.region                             # Azure region into which to deploy cluster 
+  subscription_id = var.subscription_id           # Subscription into which to deploy cluster
+  client_id = var.client_id                       # AppID of service principal
+  client_secret = var.client_secret               # Service principal password or other secret
+  tenant_id = var.tenant_id                       # Tenant to which the subscription belongs
+  pull_secret_file = var.pull_secret_file         # Path to the file with the Red Hat OpenShift pull secret
+  base_domain = var.base_domain_name              # Base domain name registered in Azure (e.g. clusters.mydomain.com)
+}
+
 ```
 
 ## Anatomy of the Terraform module
@@ -82,19 +97,29 @@ The module follows the naming convention of terraform modules:
 
 The automation modules rely heavily on [GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions) automatically validate changes to the module and release new versions. The GitHub Action workflows are found in **.github/workflows**. There are three workflows provided by default:
 
-#### Verify and release module (verify.yaml)
+#### Verify Pull Request (verify-pr.yaml)
 
-This workflow runs for pull requests against the `main` branch and when changes are pushed to the `main` branch.
+This workflow runs for pull requests against the `main` branch.
+
+```yaml
+on:
+  pull_request:
+    branches: [ main ]
+```
+
+The `verify` job calls the `verify-workflows.yaml` workflow which checks out the module and deploys the terraform template in the `test/stages` folder. (More on the details of this folder in a later section.) It applies the testcase(s) listed in the `strategy.matrix.testcase` variable against the terraform template to validate the module logic. It then runs the `.github/scripts/validate-deploy.sh` to verify that everything was deployed successfully. **Note:** This script should be customized to validate the resources provisioned by the module. After the deploy is completed, the destroy logic is also applied to validate the destroy logic and to clean up after the test. The parameters for the test case are defined in https://github.com/cloud-native-toolkit/action-module-verify/tree/main/env. New test cases can be added via pull request.
+
+#### Verify (verify.yaml)
+
+This workflow runs when changes are pushed to the `main` branch. Note this should be an exception. Use branch and pull requests against issues for changes by default.
 
 ```yaml
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 ```
 
-The `verify` job checks out the module and deploys the terraform template in the `test/stages` folder. (More on the details of this folder in a later section.) It applies the testcase(s) listed in the `strategy.matrix.testcase` variable against the terraform template to validate the module logic. It then runs the `.github/scripts/validate-deploy.sh` to verify that everything was deployed successfully. **Note:** This script should be customized to validate the resources provisioned by the module. After the deploy is completed, the destroy logic is also applied to validate the destroy logic and to clean up after the test. The parameters for the test case are defined in https://github.com/cloud-native-toolkit/action-module-verify/tree/main/env. New test cases can be added via pull request.
+The `verify` job calls the `verify-workflows.yaml` workflow which checks out the module and deploys the terraform template in the `test/stages` folder. (More on the details of this folder in a later section.) It applies the testcase(s) listed in the `strategy.matrix.testcase` variable against the terraform template to validate the module logic. It then runs the `.github/scripts/validate-deploy.sh` to verify that everything was deployed successfully. **Note:** This script should be customized to validate the resources provisioned by the module. After the deploy is completed, the destroy logic is also applied to validate the destroy logic and to clean up after the test. The parameters for the test case are defined in https://github.com/cloud-native-toolkit/action-module-verify/tree/main/env. New test cases can be added via pull request.
 
 The `verifyMetadata` job checks out the module and validates the module metadata against the module metadata schema to ensure the structure is valid.
 
@@ -193,7 +218,10 @@ The `test/stages` folder contains the terraform template needed to execute the m
 
 1. Fork the module git repository into your personal org
 2. In your forked repository, add the following secrets (note: if you are working in the repo in the Cloud Native Toolkit, these secrets are already available):
-  - __IBMCLOUD_API_KEY__ - an API Key to an IBM Cloud account where you can provision the test instances of any resources you need
+  - __AZURE_SUBSCRIPTION_ID__ - the Azure subscription where you can provision the test instances of any resources you need
+  - __AZURE_CLIENT_ID__ - the Azure Service Principal id to be used for testing
+  - __AZURE_CLIENT_SECRET__ - the secret (like password) of the Azure Service Principal id to be used for testing
+  - __AZURE_TENANT_ID__ - the Azure tenant 
 3. Create a branch in the forked repository where you will do your work
 4. Create a [draft pull request](https://github.blog/2019-02-14-introducing-draft-pull-requests/) in the Cloud Native Toolkit repository for your branch as soon as you push your first change. Add labels to the pull request for the type of change (`enhancement`, `bug`, `chore`) and the type of release (`major`, `minor`, `patch`) to impact the generated release documentation.
 5. When the changes are completed and the automated checks are running successfully, mark the pull request as "Ready to review".

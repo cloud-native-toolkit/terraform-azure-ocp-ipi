@@ -1,23 +1,64 @@
+// ************************************
+// Below variables need values provided 
 
 variable "name_prefix" {
-  description = "Prefix to use for all resources"
+  description = "OpenShift Cluster Prefix"
   type        = string
 }
 
 variable "resource_group_name" {
-  description = "Resource group name"
+  description = "Resource group name containing the base domain name"
   type        = string
 }
 
-variable "vnet_name" {
-    description = "VNet name to deploy into"
+variable "base_domain" {
+    description = "Base domain name (e.g. myclusters.mydomain.com)"
     type        = string
-    default     = ""
 }
 
 variable "region" {
   description = "Azure region into which to deploy"
   type        = string
+}
+
+variable "subscription_id" {
+  type        = string
+  description = "Subscription into which to deploy OpenShift and containing the existing resource group"
+}
+
+variable "client_id" {
+  type        = string
+  description = "The client id (service principal appID) to be used for OpenShift"
+}
+
+variable "client_secret" {
+  type        = string
+  description = "The client secret (e.g. service principal password) to be used for OpenShift"
+}
+
+variable "tenant_id" {
+  type        = string
+  description = "Tenant id containing the subscription"
+}
+
+variable "pull_secret_file" {
+    description = "File with the pull secret for OpenShift image repository access and to register the cluster"
+    type        = string
+}
+
+// **********************************
+// Following variables have defaults 
+
+variable "openshift_ssh_key" {
+  description = "The SSH Public Key to use for OpenShift Installation"
+  type        = string
+  default     = ""
+}
+
+variable "vnet_name" {
+    description = "VNet name to deploy into if using existing VNet"
+    type        = string
+    default     = ""
 }
 
 variable "master_subnet_name" {
@@ -38,58 +79,10 @@ variable "openshift_version" {
   default     = "4.10.11"
 }
 
-variable "subscription_id" {
-  type        = string
-  description = "the value of subscription_id"
-}
-variable "client_id" {
-  type        = string
-  description = "the value of client_id"
-}
-variable "client_secret" {
-  type        = string
-  description = "the value of client_secret"
-}
-
-variable "tenant_id" {
-  type        = string
-  description = "the value of tenant_id"
-}
-
-variable "pull_secret_file" {
-    description = "File with the pull secret for OpenShift image repository access and to register the cluster"
-    type        = string
-}
-
-variable "openshift_ssh_key" {
-  description = "The SSH Public Key to use for OpenShift Installation"
-  type        = string
-}
-
-variable "install_path" {
-    description = "Local filesystem path for the installation binaries and configuration files (default = ./install)"
-    type        = string
-    default     = "./install"
-}
-
 variable "binary_url_base" {
     description = "Base URL for OpenShift installer and CLI binaries"
     type        = string
     default     = "https://mirror.openshift.com/pub/openshift-v4"
-}
-
-
-// Following variables used for install_config.yaml file
-
-variable "base_domain" {
-    description = "Public DNS domain name"
-    type        = string
-}
-
-variable "credentials_mode" {
-    description = "Type of Cloud Credential Operator to be utilized (default = Mint)"
-    type = string
-    default = "Passthrough"
 }
 
 variable "network_resource_group_name" {
@@ -102,6 +95,12 @@ variable "master_hyperthreading" {
     description = "Enable hyperthreading for master nodes (default = enabled)"
     type        = string
     default     = "Enabled"
+}
+
+variable "master_architecture" {
+    description = "CPU Architecture for the master nodes (default = amd64)"
+    type        = string
+    default     = "amd64"
 }
 
 variable "master_node_disk_size" {
@@ -132,6 +131,12 @@ variable "worker_hyperthreading" {
     description = "Enable hyperthreading for compute/worker nodes (default = enabled)"
     type        = string
     default     = "Enabled"
+}
+
+variable "worker_architecture" {
+    description = "CPU Architecture for the worker nodes (default = amd64)"
+    type        = string
+    default     = "amd64"
 }
 
 variable "worker_node_type" {

@@ -11,29 +11,7 @@ locals {
        // TODO: add ability to append tags
   )
   major_version     = join(".", slice(split(".", var.openshift_version), 0, 2))
-  install_path      = var.install_path == "./install" ? "${path.root}/install" : var.install_path
 }
-
-// Create a random string of 5 lowercase letters for the cluster id
-// Only required for UPI
-/*
-resource "random_string" "cluster_id" {
-  length = 5
-  special = false
-  upper = false
-}
-*/
-
-// Configure DNS records
-/*
-resource "azurerm_dns_zone" "ocp" {
-  name = local.base_domain
-  resource_group_name = var.network_resource_group_name
-}
-*/
-
-// TODO
-// Ensure roles are assigned
 
 // Add Azure credentials to config file
 resource "local_file" "azure_config" {
@@ -47,14 +25,13 @@ resource "local_file" "azure_config" {
   file_permission = "0600"
 }
 
-
 // Download the installer and cli
 resource "null_resource" "binary_download" {
   provisioner "local-exec" {
     when = create
     command = templatefile("${path.module}/templates/cli-download.sh.tftpl", {
-        binary_path = "binaries"
-        binary_url = var.binary_url_base
+        binary_path = "${path.root}/binaries",
+        binary_url = var.binary_url_base,
         ocp_version = var.openshift_version
     })
   
@@ -62,7 +39,9 @@ resource "null_resource" "binary_download" {
 
   provisioner "local-exec" {
     when = destroy
-    command = "rm -rf ${path.root}/binaries"
+    command = templatefile("${path.module}/templates/cli-cleanup.sh.tftpl", {
+        binary_path = "${path.root}/binaries"
+    })
   }
 }
 
@@ -74,13 +53,14 @@ resource "local_file" "install_config" {
       existing_network = var.network_resource_group_name != "" ? true : false,
       cluster_name = local.cluster_name,
       base_domain = local.base_domain,
-      credentials_mode = var.credentials_mode,
       master_hyperthreading = var.master_hyperthreading,
+      master_architecture = var.master_architecture,
       master_node_disk_size = var.master_node_disk_size,
       master_node_disk_type = var.master_node_disk_type,
       master_node_type = var.master_node_type,
       master_node_qty = var.master_node_qty,
       worker_hyperthreading = var.worker_hyperthreading,
+      worker_architecture = var.worker_architecture,
       worker_node_type = var.worker_node_type,
       worker_node_disk_size = var.worker_node_disk_size,
       worker_node_disk_type = var.worker_node_disk_type,
@@ -101,11 +81,11 @@ resource "local_file" "install_config" {
       enable_fips = var.enable_fips,
       public_ssh_key = var.openshift_ssh_key
       })
-  filename = "${local.install_path}/install-config.yaml"
+  filename = "${path.root}/install/install-config.yaml"
   file_permission = "0664"
 }
 
-// Run openshift-installer and clean up bootstrap
+// Run openshift-installer
 
 resource "null_resource" "openshift-install" {
   depends_on = [
@@ -116,13 +96,17 @@ resource "null_resource" "openshift-install" {
 
   provisioner "local-exec" {
     when = create
-    command = "cd ${path.root}/install ; ${path.root}/binaries/openshift-install create cluster --dir ./"
-    # command = "echo ${path.root}/binaries/openshift-install create cluster --dir ${path.root}/install/"  
+    command = templatefile("${path.module}/templates/ocp-create.sh.tftpl", {
+      binary_path = "${path.cwd}/binaries",
+      workspace = "${path.cwd}/install"
+    })  
   }
 
   provisioner "local-exec" {
     when = destroy
-    command = "cd {path.root}/install ; ${path.root}/binaries/openshift-install destroy cluster --dir ./"
-    # command = "echo ${path.root}/binaries/openshift-install destroy cluster --dir ${path.root}/install/"
+    command = templatefile("${path.module}/templates/ocp-destroy.sh.tftpl", {
+      binary_path = "${path.cwd}/binaries",
+      workspace = "${path.cwd}/install"
+    }) 
   }
 }
