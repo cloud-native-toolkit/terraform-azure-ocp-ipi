@@ -1,24 +1,24 @@
 #!/bin/bash
 
-test -e ${binary_path} || mkdir -p ${binary_path}
+test -e ${BINARY_PATH} || mkdir -p ${BINARY_PATH}
 
 case $(uname -s) in
   Darwin)
-    wget -r -l1 -np -nd -q ${binary_url}/$(uname -m)/clients/ocp/${ocp_version}/ -P ${binary_path} -A 'openshift-install-mac-4*.tar.gz'
-    tar zxvf ${binary_path}/openshift-install-mac-4*.tar.gz -C ${binary_path}
-    wget -r -l1 -np -nd -q ${binary_url}/$(uname -m)/clients/ocp/${ocp_version}/ -P ${binary_path} -A 'openshift-client-mac-4*.tar.gz'
-    tar zxvf ${binary_path}/openshift-client-mac-4*.tar.gz -C ${binary_path}
-    wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64 -O ${binary_path}/jq > /dev/null 2>&1
+    wget -r -l1 -np -nd -q ${BINARY_URL}/$(uname -m)/clients/ocp/${OCP_VERSION}/ -P ${BINARY_PATH} -A 'openshift-install-mac-4*.tar.gz'
+    tar zxvf ${BINARY_PATH}/openshift-install-mac-4*.tar.gz -C ${BINARY_PATH}
+    wget -r -l1 -np -nd -q ${BINARY_URL}/$(uname -m)/clients/ocp/${OCP_VERSION}/ -P ${BINARY_PATH} -A 'openshift-client-mac-4*.tar.gz'
+    tar zxvf ${BINARY_PATH}/openshift-client-mac-4*.tar.gz -C ${BINARY_PATH}
+    wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64 -O ${BINARY_PATH}/jq > /dev/null 2>&1
     ;;
   Linux)
-    wget -r -l1 -np -nd -q ${binary_url}/$(uname -m)/clients/ocp/${ocp_version}/ -P ${binary_path} -A 'openshift-install-linux-4*.tar.gz'
-    tar zxvf ${binary_path}/openshift-install-linux-4*.tar.gz -C ${binary_path}
-    wget -r -l1 -np -nd -q ${binary_url}/$(uname -m)/clients/ocp/${ocp_version}/ -P ${binary_path} -A 'openshift-client-linux-4*.tar.gz'
-    tar zxvf ${binary_path}/openshift-client-linux-4*.tar.gz -C ${binary_path}
-    wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -O ${binary_path}/jq
+    wget -r -l1 -np -nd -q ${BINARY_URL}/$(uname -m)/clients/ocp/${OCP_VERSION}/ -P ${BINARY_PATH} -A 'openshift-install-linux-4*.tar.gz'
+    tar zxvf ${BINARY_PATH}/openshift-install-linux-4*.tar.gz -C ${BINARY_PATH}
+    wget -r -l1 -np -nd -q ${BINARY_URL}/$(uname -m)/clients/ocp/${OCP_VERSION}/ -P ${BINARY_PATH} -A 'openshift-client-linux-4*.tar.gz'
+    tar zxvf ${BINARY_PATH}/openshift-client-linux-4*.tar.gz -C ${BINARY_PATH}
+    wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -O ${BINARY_PATH}/jq
     ;;
   *)
     exit 1;;
 esac
-chmod u+x ${binary_path}/jq
-rm -f ${binary_path}/*.tar.gz ${binary_path}/robots*.txt* ${binary_path}/README.md
+chmod u+x ${BINARY_PATH}/jq
+rm -f ${BINARY_PATH}/*.tar.gz ${BINARY_PATH}/robots*.txt* ${BINARY_PATH}/README.md

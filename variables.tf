@@ -49,6 +49,24 @@ variable "pull_secret_file" {
 // **********************************
 // Following variables have defaults 
 
+variable "pull_secret" {
+    description = "Pull secret for OpenShift image repository access and to register the cluster"
+    type        = string
+    default     = ""
+}
+
+variable "binary_offset" {
+    description = "Path offset from current working directory to install binaries (default = binaries)"
+    type        = string
+    default     = "binaries"
+}
+
+variable "install_offset" {
+    description = "Path offset from current working directory for install metadata (default = install)"
+    type        = string
+    default     = "install"
+}
+
 variable "openshift_ssh_key" {
   description = "The SSH Public Key to use for OpenShift Installation"
   type        = string
