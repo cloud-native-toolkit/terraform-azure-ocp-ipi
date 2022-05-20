@@ -16,7 +16,13 @@ Module creates an OpenShift cluster on Azure and either creates a new virtual ne
 
 ## Post installation
 
-Post installation it is necessary to add your own certificate to the cluster to access the console. module pending.
+Post installation it is necessary to add your own certificate to the cluster to access the console. Module pending.
+
+To access the cluster from the command line (this is using the default binary and install path offsets),
+```
+  $ export KUBECONFIG=./install/auth/kubeconfig
+  $ ./binaries/oc get nodes
+```
 
 ### Software dependencies
 
@@ -31,6 +37,7 @@ The module depends on the following software components:
 - Azure provider >= 2.91.0
 
 ### Module dependencies - new virtual network
+
 This module does not have any dependencies on other modules if it is creating a new virtual network.
 
 ### Module dependencies - existing virtual network
@@ -40,6 +47,51 @@ This module makes use of the output from other modules when creating a custom vi
 - Azure Resource group - github.com/cloud-native-toolkit/terraform-azure-resource-group
 - Azure VNet - github.com/cloud-native-toolkit/terraform-azure-vnet
 - Azure Subnets - github.com/cloud-native-toolkit/terraform-azure-subnets
+
+### Input Variables
+
+This module has the following input variables:
+| Variable | Mandatory / Optional | Default Value | Description |
+| -------------------------------- | --------------| ------------------ | ----------------------------------------------------------------------------- |
+| name_prefix | Mandatory | "" | The name to give OpenShift cluster  |
+| domain_resource_group_name | Mandatory | "" | The existing resource group which contains the wildcard domain name DNS zones (refer prerequisite instructions above) |
+| base_domain | Mandatory | "" | The existing wildcard base domain name that has been defined in Azure. For example, clusters.mydomain.com. (refer to the prerequisite instructions above). |
+| region | Mandatory | "" | Azure location / region into which to deploy the OpenShift cluster |
+| subscription_id | Mandatory | "" |  The Azure subscription id into which to deploy the OpenShift cluster |
+| tenant_id | Mandatory | "" | The tenant id that owns the subscription |
+| client_id | Mandatory | "" | The appID of the service principal to be used to create the OpenShift cluster (refer to the prerequisite instructions above) |
+| client_secret | Mandatory | "" | The password or other secret of the service principal to be used to create the OpenShift cluster (refer to the prerequisite instructions above) |
+| pull_secret | Mandatory | "" | The Red Hat pull secret to access the Red Hat image repositories to install OpenShift. One of pull_secret or pull_secret_file is required. |
+| pull_secret_file | Mandatory | "" | The full path and name of the file containing the Red Hat pull secret to access the Red Hat image repositories for the OpenShift installation. One of pull_secret or pull_secret_file is required. |
+| binary_offset | Optional | binaries | The path offset from the terraform root directory into which the binaries will be stored. |
+| install_offset | Optional | install | The path offset from the terraform root directory into which the OpenShift installation files will be stored. |
+| openshift_ssh_key | Optional | "" | An existing SSH public key to be used for cluster node access. Will be created if not provided. |
+| vnet_name | Optional | "" | An existing VNet to be used for the cluster. A new VNet will be created if not provided |
+| master_subnet_name | Optional | "" | If using an existing VNet, the name of the master subnet in that VNet to be used for the cluster. |
+| worker_subnet_name | Optional | "" | If using an existing VNet, the name of the worker subnet in that VNet to be used for the cluster. |
+| network_resource_group_name | Optional | "" | If using an existing VNet, the resource group that contains the VNet and associated components. |
+| openshift_version | Optional | 4.10.11 | The version of OpenShift to be installed (must be available in the mirror repository - see below) |
+| binary_url_base | Optional | https://mirror.openshift.com/pub/openshift-v4 | The repository containing the OpenShift client binaries. |
+| master_hyperthreading | Optional | Enabled | Flag to determine whether hyperthreading should be used for master nodes. |
+| master_architecture | Optional | amd64 | CPU Architecture for the master nodes |
+| master_node_disk_size | Optional | 120 | Size in GiB of the master node disk. |
+| master_node_disk_type | Optional | Premium_LRS | Type of disk for the master nodes | 
+| master_node_type | Optional | Standard_D8s_v3 | Azure VM type for the master nodes. Note the minimum size is 8 vCPU and 32GB RAM |
+| master_node_qty | Optional | 3 | The number of master nodes to be deployed. |
+| worker_hyperthreading | Optional | Enabled | Flag to determine whether hyperthreading should be used for worker nodes. |
+| worker_architecture | Optional | amd64 | CPU Architecture for the worker nodes |
+| worker_node_disk_size | Optional | 120 | Size in GiB of the worker node disk. |
+| worker_node_disk_type | Optional | Premium_LRS | Type of disk for the worker nodes | 
+| worker_node_type | Optional | Standard_D4s_v3 | Azure VM type for the worker nodes. Note the minimum size is 4 vCPU and 16GB RAM |
+| worker_node_qty | Optional | 3 | The number of worker nodes to be deployed. |
+| cluster_cidr | Optional | 10.128.0.0/14 | CIDR for the internal OpenShift network. |
+| cluster_host_prefix | Optional | 23 | Host prefix for the internal OpenShift network |
+| machine_cidr | Optional | 10.0.0.0/16 | CIDR for the master and worker nodes. Must be the same or a subset of the VNet CIDR |
+| service_network_cidr | Optional | 172.30.0.0/16 | CIDR for the internal OpenShift service network. |
+| network_type | Optional | OpenShiftSDN | Network plugin to use for the OpenShift virtual networking. |
+| outbound_type | Optional | Loadbalancer | The type of outbound routing to use. Loadbalancer or UserDefinedRouting. |
+| enable_fips | Optional | false | Flag to enable FIPS on the cluster. |
+
 
 ### Example usage
 
@@ -65,15 +117,27 @@ provider "azurerm" {
 module "ocp-ipi" {
   source = "github.com/cloud-native-toolkit/terraform-azure-ocp-ipi"
 
-  name_prefix = var.ocp_cluster_prefix            # Name prefix for the OpenShift cluster
-  resource_group_name = var.resource_group_name   # Where base domain is stored
-  region = var.region                             # Azure region into which to deploy cluster 
-  subscription_id = var.subscription_id           # Subscription into which to deploy cluster
-  client_id = var.client_id                       # AppID of service principal
-  client_secret = var.client_secret               # Service principal password or other secret
-  tenant_id = var.tenant_id                       # Tenant to which the subscription belongs
-  pull_secret_file = var.pull_secret_file         # Path to the file with the Red Hat OpenShift pull secret
-  base_domain = var.base_domain_name              # Base domain name registered in Azure (e.g. clusters.mydomain.com)
+  name_prefix = var.ocp_cluster_prefix                   # Name prefix for the OpenShift cluster
+  domain_resource_group_name = var.resource_group_name   # Where base domain is stored
+  region = var.region                                   # Azure region into which to deploy cluster 
+  subscription_id = var.subscription_id                 # Subscription into which to deploy cluster
+  client_id = var.client_id                             # AppID of service principal
+  client_secret = var.client_secret                     # Service principal password or other secret
+  tenant_id = var.tenant_id                             # Tenant to which the subscription belongs
+  pull_secret_file = var.pull_secret_file               # Path to the file with the Red Hat OpenShift pull secret
+  base_domain = var.base_domain_name                    # Base domain name registered in Azure (e.g. clusters.mydomain.com)
+}
+
+output "consoleURL" {
+  value = module.ocp-ipi.consoleURL
+}
+
+output "kubeadminUsername" {
+  value = module.ocp-ipi.kubeadminUsername
+}
+
+output "kubeadminPassword" {
+  value = module.ocp-ipi.kubeadminPassword
 }
 
 ```

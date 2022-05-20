@@ -78,7 +78,7 @@ resource "local_file" "install_config" {
       machine_cidr = var.machine_cidr
       network_type = var.network_type
       service_network_cidr = var. service_network_cidr
-      resource_group_name = var.resource_group_name
+      resource_group_name = var.domain_resource_group_name
       network_resource_group_name = var.network_resource_group_name
       region = var.region
       vnet_name = var.vnet_name

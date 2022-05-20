@@ -6,7 +6,7 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "resource_group_name" {
+variable "domain_resource_group_name" {
   description = "Resource group name containing the base domain name"
   type        = string
 }
@@ -41,16 +41,17 @@ variable "tenant_id" {
   description = "Tenant id containing the subscription"
 }
 
-variable "pull_secret_file" {
-    description = "File with the pull secret for OpenShift image repository access and to register the cluster"
-    type        = string
-}
-
 // **********************************
 // Following variables have defaults 
 
 variable "pull_secret" {
     description = "Pull secret for OpenShift image repository access and to register the cluster"
+    type        = string
+    default     = ""
+}
+
+variable "pull_secret_file" {
+    description = "File with the pull secret for OpenShift image repository access and to register the cluster"
     type        = string
     default     = ""
 }
