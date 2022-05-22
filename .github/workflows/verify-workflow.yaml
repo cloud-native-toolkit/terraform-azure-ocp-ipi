@@ -12,6 +12,8 @@ on:
         required: true
       AZURE_TENANT_ID: 
         required: true
+      OCP_PULL_SECRET:
+        required: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -45,6 +47,7 @@ jobs:
           TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           TF_VAR_enabled: ${{ matrix.enabled }}
+          TF_VAR_pull_secret: ${{secrets.OCP_PULL_SECRET}}
 
       - name: Verify destroy on ${{ matrix.testcase }}
         uses: cloud-native-toolkit/action-module-verify-destroy@main
@@ -57,3 +60,4 @@ jobs:
           TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           TF_VAR_enabled: ${{ matrix.enabled }}
+          TF_VAR_pull_secret: ${{secrets.OCP_PULL_SECRET}}
