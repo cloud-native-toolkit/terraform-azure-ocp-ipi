@@ -25,3 +25,11 @@ output "clusterID" {
 output "infraID" {
   value = data.external.oc_info.result.infraID
 }
+
+output "bin_dir" {
+  value = local.binary_path
+}
+
+output "config_file_path" {
+  value = "${local.install_path}/auth/kubeconfig"
+}
