@@ -51,5 +51,8 @@ output "password" {
 output "bin_dir" {
   value       = local.binary_path
   description = "Path to the client binaries"
+  depends_on = [
+    null_resource.binary_download
+  ]
 }
 
