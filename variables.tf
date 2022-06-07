@@ -96,6 +96,12 @@ variable "openshift_version" {
   description = "OpenShift version to install"
   type        = string
   default     = "4.10.11"
+  validation {
+    condition = (
+        substr(var.openshift_version, 0 , 2) == "4."
+    )
+    error_message = "Openshift version must be either \"4.x\" or \"4.x.x\"."
+  }
 }
 
 variable "binary_url_base" {

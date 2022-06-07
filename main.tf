@@ -11,9 +11,12 @@ locals {
        // TODO: add ability to append tags
   )
   major_version     = join(".", slice(split(".", var.openshift_version), 0, 2))
-  binary_path       = "${path.cwd}/${var.binary_offset}"
+  binary_path       = module.setup_clis.bin_dir
   install_path      = "${path.cwd}/${var.install_offset}"
   pull_secret       = var.pull_secret_file != "" ? "${chomp(file(var.pull_secret_file))}" : var.pull_secret
+  cluster_type      = "openshift"
+  cluster_type_code = "ocp4"
+  cluster_version   = "${data.external.oc_login.result.serverVersion}_openshift"
 }
 
 // Add Azure credentials to config file
@@ -29,29 +32,11 @@ resource "local_file" "azure_config" {
 }
 
 // Download the installer and cli
-resource "null_resource" "binary_download" {
+module setup_clis {
+    source = "github.com/cloud-native-toolkit/terraform-util-clis.git"
 
-  triggers = {
-    binary_path = local.binary_path
-    ocp_version = var.openshift_version
-  }
-
-  provisioner "local-exec" {
-    when = create
-    command = templatefile("${path.module}/templates/cli-download.sh.tftpl", {
-      BINARY_PATH = "${self.triggers.binary_path}"
-      BINARY_URL = var.binary_url_base
-      OCP_VERSION = "${self.triggers.ocp_version}"
-    })
-  
-  }
-
-  provisioner "local-exec" {
-    when = destroy
-    command = templatefile("${path.module}/templates/cli-cleanup.sh.tftpl", {
-      BINARY_PATH = "${self.triggers.binary_path}"
-    })
-  }
+    bin_dir = "${path.cwd}/${var.binary_offset}"
+    clis = ["openshift-install-${var.openshift_version}","jq","yq4","oc"]
 }
 
 // Create the install-config.yaml file
@@ -98,7 +83,6 @@ resource "local_file" "install_config" {
 resource "null_resource" "openshift-install" {
   depends_on = [
     local_file.install_config,
-    null_resource.binary_download,
     local_file.azure_config
   ]
 
