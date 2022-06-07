@@ -14,7 +14,7 @@ BIN_DIR=$(echo "${INPUT}" | grep "bin_dir" | sed -E 's/.*"bin_dir": ?"([^"]+)".*
 # Parse input
 eval "$(echo "${INPUT}" | ${BIN_DIR}/jq -r '@sh "LOG_FILE=\(.log_file) KUBECONFIG_FILE=\(.kubeconfig_file)"')"
 
-SERVER_URL="$(cat ${KUBECONFIG_FILE} | ${BIN_DIR}/yq4 e '.clusters[].cluster.server')"
+SERVER_URL="$(cat ${KUBECONFIG_FILE} | ${BIN_DIR}/yq4 '.clusters[].cluster.server')"
 SERVER_TOKEN="$(cat ${KUBECONFIG_FILE} | ${BIN_DIR}/yq4 '.users[] | select(.name == "kube*")' | ${BIN_DIR}/yq4 '.user.token' )"
 
 export KUBECONFIG=${KUBECONFIG_FILE}
