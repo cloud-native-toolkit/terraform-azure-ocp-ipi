@@ -128,19 +128,40 @@ module "ocp-ipi" {
   base_domain = var.base_domain_name                    # Base domain name registered in Azure (e.g. clusters.mydomain.com)
 }
 
-output "consoleURL" {
-  value = module.ocp-ipi.consoleURL
-}
-
-output "kubeadminUsername" {
-  value = module.ocp-ipi.kubeadminUsername
-}
-
-output "kubeadminPassword" {
-  value = module.ocp-ipi.kubeadminPassword
-}
-
 ```
+
+### Troubleshooting
+
+In the event that the openshift installation fails, check the logs under,
+```
+<root_path>/<install_path>/.openshift_install.log
+```
+the default install_path value is install, so from the place you ran the terraform from, it is possible to see the last log entries using the following command,
+```shell
+$ tail -25 ./install/.openshift_install.log
+```
+
+The default kubeconfig for cluster access is located under the same installation directory,
+```
+<root_path>/<install_path>/auth/kubeconfig
+```
+
+To login to the cluster from the CLI, export this as your KUBECONFIG shell environment value,
+```shell
+$ export KUBECONFIG=./install/auth/kubeconfig
+```
+
+You should then be able to obtain details of the cluster, such as (with the default binary path),
+```shell
+$ ./binaries/oc get clusterversion
+```
+Before retrying a failed openshift installation, manually remove the resource group that contains the partial OpenShift cluster. This will have the format,
+```
+<cluster_name>-<random-5-digits>-rg
+```
+Also, remove the CNAME record from the DNS zone of the subdomain you are using. This DNS Zone record for the base domain will be under the resource group name you supplied as input to the build. 
+
+After removing the failed entries and fixing the problem, re-run the terraform build.
 
 ## Anatomy of the Terraform module
 
