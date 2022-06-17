@@ -16,7 +16,7 @@ locals {
   pull_secret       = var.pull_secret_file != "" ? "${chomp(file(var.pull_secret_file))}" : var.pull_secret
   cluster_type      = "openshift"
   cluster_type_code = "ocp4"
-  cluster_version   = "${data.external.oc_login.result.serverVersion}_openshift"
+  cluster_version   = "${data.external.oc_info.result.serverVersion}_openshift"
 }
 
 // Add Azure credentials to config file
