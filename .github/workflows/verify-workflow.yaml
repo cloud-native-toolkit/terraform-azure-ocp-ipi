@@ -46,7 +46,6 @@ jobs:
           TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
           TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-          TF_VAR_enabled: ${{ matrix.enabled }}
           TF_VAR_pull_secret: ${{secrets.OCP_PULL_SECRET}}
 
       - name: Verify destroy on ${{ matrix.testcase }}
@@ -59,5 +58,4 @@ jobs:
           TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
           TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-          TF_VAR_enabled: ${{ matrix.enabled }}
           TF_VAR_pull_secret: ${{secrets.OCP_PULL_SECRET}}
