@@ -117,16 +117,6 @@ data external "oc_info" {
     bin_dir = local.binary_path
     log_file = "${local.install_path}/.openshift_install.log"
     metadata_file = "${local.install_path}/metadata.json"
-  }
-}
-
-data external "oc_login" {
-  depends_on = [null_resource.openshift-install]
-
-  program = ["bash", "${path.module}/scripts/oc-login.sh"]
-
-  query = {
-    bin_dir = local.binary_path
     kubeconfig_file = "${local.install_path}/auth/kubeconfig"
   }
 }

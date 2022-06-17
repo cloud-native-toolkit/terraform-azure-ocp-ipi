@@ -1,5 +1,5 @@
 output "id" {
-  value       = data.external.oc_login.result.clusterID
+  value       = data.external.oc_info.result.clusterID
   description = "ID of the cluster"
 }
 
@@ -28,7 +28,7 @@ output "config_file_path" {
   value       = "${local.install_path}/auth/kubeconfig"
   description = "Path to the config file for the cluster."
   depends_on  = [
-    data.external.oc_login
+    data.external.oc_info
   ]
 }
 
@@ -38,7 +38,7 @@ output "consoleURL" {
 }
 
 output "server_url" {
-  value       = data.external.oc_login.result.serverURL
+  value       = data.external.oc_info.result.serverURL
   description = "The url used to connect to the api of the cluster."
 }
 
@@ -66,19 +66,18 @@ output "bin_dir" {
 
 output "platform" {
   value = {
-    id         = data.external.oc_login.result.clusterID
+    id         = data.external.oc_info.result.clusterID
     kubeconfig = "${local.install_path}/auth/kubeconfig"
-    server_url = data.external.oc_login.result.serverURL
+    server_url = data.external.oc_info.result.serverURL
     type       = local.cluster_type
     type_code  = local.cluster_type_code
     version    = local.cluster_version
     ingress    = data.external.oc_info.result.consoleURL
-    tls_secret = data.external.oc_login.result.serverToken
+    tls_secret = data.external.oc_info.result.serverToken
   }
   sensitive = true
   description = "Configuration values for the created cluster platform"
   depends_on = [
-    data.external.oc_login,
     data.external.oc_info
   ]
 }
