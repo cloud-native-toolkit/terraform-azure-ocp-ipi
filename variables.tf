@@ -111,7 +111,7 @@ variable "binary_url_base" {
 }
 
 variable "network_resource_group_name" {
-    description = "Name of the resource group for the network components (must be different to the overall resource group)"
+    description = "Name of the resource group for the network components (must be different to the cluster resource group)"
     type        = string
     default     = ""
 }
@@ -128,6 +128,12 @@ variable "master_architecture" {
     default     = "amd64"
 }
 
+variable "bootstrap_type" {
+    description = "Type / SKU of the bootstrap VM (default = Standard_D4s_v3)"
+    type        = string
+    default     = "Standard_D4s_v3"
+}
+
 variable "master_node_disk_size" {
     description = "Size of master node disk in GB (default = 120)"
     type        = string
@@ -141,7 +147,7 @@ variable "master_node_disk_type" {
 }
 
 variable "master_node_type" {
-    description = "Master node type (defualt = Standard_D2s_v3)"
+    description = "Master node type (default = Standard_D8s_v3)"
     type        = string
     default     = "Standard_D8s_v3"
 }
@@ -228,4 +234,28 @@ variable "enable_fips" {
     description = "Enable FIPS in the cluster (default = false)"
     type        = string
     default     = false
+}
+
+variable "vnet_cidrs" {
+    description = "CIDRs for the VNet, either existing or to be created"
+    type        = list(string)
+    default     = ["10.0.0.0/16"]
+}
+
+variable "ssh_key_name" {
+    description = "Name for the SSH keys that are created to access the OpenShift cluster (default = openshift_rsa)"
+    type        = string
+    default     = "openshift_rsa"
+}
+
+variable "storage_account_tier" {
+    description = "Storage account tier to be utilised - Standard (default) or Premium"
+    type        = string
+    default     = "Standard"
+}
+
+variable "storage_account_replication_type" {
+    description = "Storage account replication type to be utilised - LRS (default), GRS, RAGRS, ZRS, GZRS or RAGZRS"
+    type        = string
+    default     = "LRS"
 }

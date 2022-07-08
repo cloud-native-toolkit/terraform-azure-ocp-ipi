@@ -1,3 +1,5 @@
+/*
+
 output "id" {
   value       = data.external.oc_info.result.clusterID
   description = "ID of the cluster"
@@ -82,3 +84,4 @@ output "platform" {
   ]
 }
 
+*/
