@@ -1,5 +1,5 @@
 
-
+// Create public IP for bootstrap VM
 resource "azurerm_public_ip" "bootstrap_public_ip" {
     name                = "${var.name_prefix}-${var.cluster_id}-bootstrap-pip"
     location            = var.region
@@ -13,6 +13,7 @@ data "azurerm_public_ip" "bootstrap_public_ip" {
     resource_group_name = var.resource_group_name
 }
 
+// Create network interface on master subnet for bootstrap VM
 resource "azurerm_network_interface" "bootstrap" {
     name                = "${var.name_prefix}-${var.cluster_id}-bootstrap-nic"
     location            = var.region
@@ -27,6 +28,7 @@ resource "azurerm_network_interface" "bootstrap" {
     }
 }
 
+// Create bootstrap VM
 resource "azurerm_linux_virtual_machine" "bootstrap" {
     name                            = "${var.name_prefix}-${var.cluster_id}-bootstrap"
     location                        = var.region
@@ -60,6 +62,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
 
 }
 
+// Create security rule which is removed once bootstrapping is complete
 resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
   name                        = "bootstrap_ssh_in"
   priority                    = 103
@@ -75,4 +78,19 @@ resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
 }
 
 
-// Add backend address pool association for load balancers
+// Backend address pool association for load balancers
+resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap" {
+  count = ! var.outbound_udr ? 1 : 0
+
+  network_interface_id = azurerm_network_interface.bootstrap.id
+  backend_address_pool_id = var.public_lb_pool_id
+  ip_configuration_name = "${var.name_prefix}-${var.cluster_id}-nic-ip"
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "internal_lb_bootstrap" {
+  count = 1    // Use count to keep variable tracking consistent with public LB
+
+  network_interface_id = azurerm_network_interface.bootstrap.id
+  backend_address_pool_id = var.internal_lb_pool_id
+  ip_configuration_name = "${var.name_prefix}-${var.cluster_id}-nic-ip"  
+}

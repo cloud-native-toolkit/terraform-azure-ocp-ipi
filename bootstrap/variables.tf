@@ -4,7 +4,7 @@ variable "name_prefix" {
 }
 
 variable "cluster_id" {
-    description = "5 digit random number for the cluster id"
+    description = "5 digit random number for the cluster ID"
     type        = string
     validation {
       condition     = length(var.cluster_id) == 5
@@ -23,8 +23,18 @@ variable "resource_group_name" {
 }
 
 variable "subnet_id" {
-    description = "Id of the subnet to which to attach the bootstrap VM"
+    description = "ID of the subnet to which to attach the bootstrap VM"
     type        = string
+}
+
+variable "public_lb_pool_id" {
+    description = "ID of the public load balancer backend pool"
+    type = string
+}
+
+variable "internal_lb_pool_id" {
+    description = "ID of the internal load balancer backend pool"
+    type = string
 }
 
 variable "nsg_name" {
@@ -43,7 +53,7 @@ variable "vm_image" {
 }
 
 variable "identity" {
-    description = "User assigned identity id for the bootstrap VM"
+    description = "User assigned identity ID for the bootstrap VM"
     type        = string
 }
 
@@ -64,4 +74,10 @@ variable "os_disk_size" {
     description = "Size of the OS disk for the bootstrap server (default = 100GB)"
     type        = number
     default     = 100
+}
+
+variable "outbound_udr" {
+    description = "Flag on whether to use User Defined Routing or public load balancer, usually set true for private VNet"
+    type        = bool
+    default     = false
 }
