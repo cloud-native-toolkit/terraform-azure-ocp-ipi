@@ -57,3 +57,23 @@ output "nsg_name" {
     value = azurerm_network_security_group.cluster.name
     description = "Name of the network security group"
 }
+
+output "internal_lb_id" {
+    value = module.internal_lb.id
+    description = "ID of the internal load balancer"
+}
+
+output "internal_lb_backend_pool_id" {
+    value = module.internal_lb.backend_pool_id_v4
+    description = "ID of the internal load balancer backend pool"
+}
+
+output "public_lb_id" {
+    value = module.public_lb.id
+    description = "ID of the public load balancer"
+}
+
+output "public_lb_backend_pool_id" {
+    value = module.public_lb.backend_pool_id_v4
+    description = "ID of the public load balancer backend pool"
+}
