@@ -1,8 +1,8 @@
 
 locals {
-  cluster_id = "${random_string.cluster_id.result}"
-  cluster_name = var.name_prefix
-  base_domain = var.base_domain
+  cluster_id    = "${random_string.cluster_id.result}"
+  cluster_name  = var.name_prefix
+  base_domain   = var.base_domain
 
   tags = merge(
     {
@@ -21,7 +21,7 @@ locals {
   pull_secret       = var.pull_secret_file != "" ? "${chomp(file(var.pull_secret_file))}" : var.pull_secret
   cluster_type      = "openshift"
   cluster_type_code = "ocp4"
-  // cluster_version   = "${data.external.oc_info.result.serverVersion}_openshift"
+  cluster_version   = "${data.external.oc_info.result.serverVersion}_openshift"
 }
 
 // Construct the cluster_id to uniquely identify the cluster even if the same name_prefix is provided
@@ -29,18 +29,6 @@ resource "random_string" "cluster_id" {
     length = 5
     special = false
     upper = false
-}
-
-// Add Azure credentials to config file
-resource "local_file" "azure_config" {
-  content = templatefile("${path.module}/templates/osServicePrincipal.json.tftpl",{
-      subscription_id = var.subscription_id,
-      client_id = var.client_id,
-      client_secret = var.client_secret,
-      tenant_id = var.tenant_id
-  })
-  filename = pathexpand("~/.azure/osServicePrincipal.json")
-  file_permission = "0600"
 }
 
 // Download the installer and cli
@@ -148,6 +136,54 @@ resource "azurerm_image" "cluster" {
   }
 }
 
+// Create ignition files
+module "ignition" {
+  source = "./ignition"
+
+  name_prefix                 = var.name_prefix
+  cluster_id                  = local.cluster_id
+  region                      = var.region
+  bin_dir                     = module.setup_clis.bin_dir
+  install_path                = local.install_path
+  openshift_version           = var.openshift_version
+  cluster_name                = local.cluster_name
+  cluster_infra_name          = "${local.cluster_name}-${local.cluster_id}"
+  base_domain                 = local.base_domain
+  domain_resource_group_name  = var.domain_resource_group_name
+  master_hyperthreading       = var.master_hyperthreading
+  master_architecture         = var.master_architecture
+  master_node_disk_size       = var.master_node_disk_size
+  master_node_disk_type       = var.master_node_disk_type
+  master_node_type            = var.master_node_type
+  master_node_qty             = var.master_node_qty
+  worker_hyperthreading       = var.worker_hyperthreading
+  worker_architecture         = var.worker_architecture
+  worker_node_type            = var.worker_node_type
+  worker_node_disk_size       = var.worker_node_disk_size
+  worker_node_disk_type       = var.worker_node_disk_type
+  worker_node_qty             = var.worker_node_qty
+  cluster_cidr                = var.cluster_cidr
+  cluster_host_prefix         = var.cluster_host_prefix
+  machine_cidr                = var.vnet_cidrs[0]
+  network_type                = var.network_type
+  service_network_cidr        = var.service_network_cidr
+  resource_group_name         = module.vnet.resource_group_name
+  network_resource_group_name = module.vnet.network_resource_group_name
+  vnet_name                   = module.vnet.vnet_name
+  master_subnet_name          = module.vnet.master_subnet_name
+  worker_subnet_name          = module.vnet.worker_subnet_name
+  nsg_name                    = module.vnet.nsg_name
+  outbound_type               = var.outbound_type
+  pull_secret                 = local.pull_secret
+  enable_fips                 = var.enable_fips
+  public_ssh_key              = chomp(module.ssh_keys.pub_key)
+  subscription_id             = var.subscription_id
+  client_id                   = var.client_id
+  client_secret               = var.client_secret
+  tenant_id                   = var.tenant_id
+  availability_zones          = var.master_availability_zones
+}
+
 // Create bootstrap resources
 module "bootstrap" {
   source = "./bootstrap"
@@ -157,50 +193,14 @@ module "bootstrap" {
   region              = var.region
   resource_group_name = module.vnet.resource_group_name
   subnet_id           = module.vnet.master_subnet_id
+  public_lb_pool_id   = module.vnet.public_lb_id
+  internal_lb_pool_id = module.vnet.internal_lb_backend_pool_id
   nsg_name            = module.vnet.nsg_name
   vm_size             = var.bootstrap_type
   vm_image            = azurerm_image.cluster.id
   identity            = azurerm_user_assigned_identity.cluster.id
   storage_account     = azurerm_storage_account.cluster
-}
-
-// Create the install-config.yaml file
-
-resource "local_file" "install_config" {
-  content  = templatefile("${path.module}/templates/install_config.tftpl", {
-      existing_network = var.network_resource_group_name != "" ? true : false,
-      cluster_name = local.cluster_name
-      base_domain = local.base_domain
-      master_hyperthreading = var.master_hyperthreading
-      master_architecture = var.master_architecture
-      master_node_disk_size = var.master_node_disk_size
-      master_node_disk_type = var.master_node_disk_type
-      master_node_type = var.master_node_type
-      master_node_qty = var.master_node_qty
-      worker_hyperthreading = var.worker_hyperthreading
-      worker_architecture = var.worker_architecture
-      worker_node_type = var.worker_node_type
-      worker_node_disk_size = var.worker_node_disk_size
-      worker_node_disk_type = var.worker_node_disk_type
-      worker_node_qty = var.worker_node_qty
-      cluster_cidr = var.cluster_cidr
-      cluster_host_prefix = var.cluster_host_prefix
-      machine_cidr = var.machine_cidr
-      network_type = var.network_type
-      service_network_cidr = var. service_network_cidr
-      resource_group_name = var.domain_resource_group_name
-      network_resource_group_name = var.network_resource_group_name
-      region = var.region
-      vnet_name = var.vnet_name
-      master_subnet_name = var.master_subnet_name
-      worker_subnet_name = var.worker_subnet_name
-      outbound_type = var.outbound_type
-      pull_secret = local.pull_secret
-      enable_fips = var.enable_fips
-      public_ssh_key = var.openshift_ssh_key
-    })
-  filename = "${local.install_path}/install-config.yaml"
-  file_permission = "0664"
+  outbound_udr        = var.outbound_type == "LoadBalancer" ? false : true
 }
 
 // Run openshift-installer

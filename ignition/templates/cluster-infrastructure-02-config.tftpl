@@ -1,0 +1,20 @@
+apiVersion: config.openshift.io/v1
+kind: Infrastructure
+metadata:
+  creationTimestamp: null
+  name: cluster
+spec:
+  cloudConfig:
+    key: config
+    name: cloud-provider-config
+status:
+  apiServerInternalURI: https://api-int.${CLUSTER_NAME}.${BASE_DOMAIN}:6443
+  apiServerURL: https://api.${CLUSTER_NAME}.${BASE_DOMAIN}:6443
+  etcdDiscoveryDomain: ${CLUSTER_NAME}.${BASE_DOMAIN}
+  infrastructureName: ${CLUSTER_INFRA_NAME}
+  platform: Azure
+  platformStatus:
+    azure:
+      cloudName: AzurePublicCloud
+      resourceGroupName: ${RESOURCE_GROUP_NAME}
+    type: Azure

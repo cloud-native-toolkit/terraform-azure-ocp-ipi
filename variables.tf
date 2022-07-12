@@ -206,12 +206,6 @@ variable "cluster_host_prefix" {
     default     = 23
 }
 
-variable "machine_cidr" {
-    description = "CIDR for master and compute nodes (default = 10.0.0.0/16)"
-    type = string
-    default = "10.0.0.0/16"
-}
-
 variable "network_type" {
     description = "Network plugin to use (default = OpenShiftSDN)"
     type = string
@@ -237,7 +231,7 @@ variable "enable_fips" {
 }
 
 variable "vnet_cidrs" {
-    description = "CIDRs for the VNet, either existing or to be created"
+    description = "CIDRs for the VNet, either existing or to be created. First one is for the OpenShift cluster nodes."
     type        = list(string)
     default     = ["10.0.0.0/16"]
 }
@@ -258,4 +252,18 @@ variable "storage_account_replication_type" {
     description = "Storage account replication type to be utilised - LRS (default), GRS, RAGRS, ZRS, GZRS or RAGZRS"
     type        = string
     default     = "LRS"
+}
+
+variable "master_availability_zones" {
+  type        = list(string)
+  description = "The availability zones in which to create the masters. The length of this list must match master_node_qty."
+  default = [
+    "1",
+    "2",
+    "3",
+  ]
+  validation {
+    condition     = length(var.master_availability_zones) == 1 || length(var.master_availability_zones) == 3
+    error_message = "The master_availability_zones variable must be set to either [1] or [1, 2, 3] zones."
+  }
 }

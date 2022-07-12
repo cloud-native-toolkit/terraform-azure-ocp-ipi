@@ -1,0 +1,20 @@
+apiVersion: v1
+data:
+  config: "{\n\t\"cloud\": \"AzurePublicCloud\",\n\t\"tenantId\": \"${TENANT_ID}\",\n\t\"aadClientId\":
+    \"\",\n\t\"aadClientSecret\": \"\",\n\t\"aadClientCertPath\": \"\",\n\t\"aadClientCertPassword\":
+    \"\",\n\t\"useManagedIdentityExtension\": true,\n\t\"userAssignedIdentityID\":
+    \"\",\n\t\"subscriptionId\": \"${SUBSCRIPTION_ID}\",\n\t\"resourceGroup\":
+    \"${RESOURCE_GROUP_NAME}\",\n\t\"location\": \"${REGION}\",\n\t\"vnetName\": \"${VNET_NAME}\",\n\t\"vnetResourceGroup\":
+    \"${NETWORK_RESOURCE_GROUP_NAME}\",\n\t\"subnetName\": \"${WORKER_SUBNET_NAME}\",\n\t\"securityGroupName\":
+    \"${NSG_NAME}\",\n\t\"routeTableName\": \"${CLUSTER_INFRA_NAME}-node-routetable\",\n\t\"primaryAvailabilitySetName\":
+    \"\",\n\t\"vmType\": \"\",\n\t\"primaryScaleSetName\": \"\",\n\t\"cloudProviderBackoff\":
+    true,\n\t\"cloudProviderBackoffRetries\": 0,\n\t\"cloudProviderBackoffExponent\":
+    0,\n\t\"cloudProviderBackoffDuration\": 6,\n\t\"cloudProviderBackoffJitter\":
+    0,\n\t\"cloudProviderRateLimit\": true,\n\t\"cloudProviderRateLimitQPS\": 12,\n\t\"cloudProviderRateLimitBucket\":
+    10,\n\t\"cloudProviderRateLimitQPSWrite\": 12,\n\t\"cloudProviderRateLimitBucketWrite\":
+    10,\n\t\"useInstanceMetadata\": true,\n\t\"loadBalancerSku\": \"standard\",\n\t\"excludeMasterFromStandardLB\":
+    null,\n\t\"disableOutboundSNAT\": null,\n\t\"maximumLoadBalancerRuleCount\": 0\n}\n"
+kind: ConfigMap
+metadata:
+  name: cloud-provider-config
+  namespace: openshift-config

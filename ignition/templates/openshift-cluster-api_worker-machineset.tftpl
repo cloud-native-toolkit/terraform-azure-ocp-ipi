@@ -1,0 +1,63 @@
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  creationTimestamp: null
+  labels:
+    machine.openshift.io/cluster-api-cluster: ${CLUSTER_INFRA_NAME}
+    machine.openshift.io/cluster-api-machine-role: worker
+    machine.openshift.io/cluster-api-machine-type: worker
+  name: ${CLUSTER_INFRA_NAME}-worker-${REGION}${COUNT}
+  namespace: openshift-machine-api
+spec:
+  replicas: ${REPLICAS}
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-cluster: ${CLUSTER_INFRA_NAME}
+      machine.openshift.io/cluster-api-machineset: ${CLUSTER_INFRA_NAME}-worker-${REGION}${COUNT}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        machine.openshift.io/cluster-api-cluster: ${CLUSTER_INFRA_NAME}
+        machine.openshift.io/cluster-api-machine-role: worker
+        machine.openshift.io/cluster-api-machine-type: worker
+        machine.openshift.io/cluster-api-machineset: ${CLUSTER_INFRA_NAME}-worker-${REGION}${COUNT}
+    spec:
+      metadata:
+        creationTimestamp: null
+      providerSpec:
+        value:
+          apiVersion: azureproviderconfig.openshift.io/v1beta1
+          credentialsSecret:
+            name: azure-cloud-credentials
+            namespace: openshift-machine-api
+          image:
+            offer: ""
+            publisher: ""
+            resourceID: /resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Compute/images/${CLUSTER_INFRA_NAME}
+            sku: ""
+            version: ""
+          internalLoadBalancer: ""
+          kind: AzureMachineProviderSpec
+          location: ${REGION}
+          managedIdentity: ${CLUSTER_INFRA_NAME}-identity
+          metadata:
+            creationTimestamp: null
+          natRule: null
+          networkResourceGroup: ${NETWORK_RESOURCE_GROUP_NAME}
+          osDisk:
+            diskSizeGB: ${WORKER_NODE_DISK_SIZE}
+            managedDisk:
+              storageAccountType: ${WORKER_NODE_DISK_TYPE}
+            osType: Linux
+          publicIP: false
+          publicLoadBalancer: ""
+          resourceGroup: ${RESOURCE_GROUP_NAME}
+          sshPrivateKey: ""
+          sshPublicKey: ""
+          subnet: ${WORKER_SUBNET_NAME}
+          userDataSecret:
+            name: worker-user-data
+          vmSize: ${WORKER_NODE_TYPE}
+          vnet: ${VNET_NAME}
+          zone: "${ZONE}"

@@ -1,0 +1,12 @@
+apiVersion: config.openshift.io/v1
+kind: DNS
+metadata:
+  creationTimestamp: null
+  name: cluster
+spec:
+  baseDomain: ${CLUSTER_NAME}.${BASE_DOMAIN}
+  privateZone:
+    id: /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/privateDnsZones/${CLUSTER_NAME}.${BASE_DOMAIN}
+  publicZone:
+    id: /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${DOMAIN_RESOURCE_GROUP_NAME}/providers/Microsoft.Network/dnszones/${BASE_DOMAIN}
+status: {}
