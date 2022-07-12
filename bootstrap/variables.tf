@@ -62,6 +62,11 @@ variable "storage_account" {
     type = any
 }
 
+variable "ignition" {
+  type        = string
+  description = "The content of the bootstrap ignition file."
+}
+
 // Variables below this have default values
 
 variable "storage_type" {

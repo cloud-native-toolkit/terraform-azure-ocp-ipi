@@ -272,3 +272,55 @@ resource "null_resource" "create_ignition_configs" {
      }
   }
 }
+
+// Read ignition content for bootstrap activities
+resource "azurerm_storage_blob" "ignition-bootstrap" {
+  name                   = "bootstrap.ign"
+  source                 = "${var.install_path}/bootstrap.ign"
+  storage_account_name   = azurerm_storage_account.ignition.name
+  storage_container_name = azurerm_storage_container.ignition.name
+  type                   = "Block"
+  depends_on = [
+    null_resource.create_ignition_configs
+  ]
+}
+
+resource "azurerm_storage_blob" "ignition-master" {
+  name                   = "master.ign"
+  source                 = "${var.install_path}/master.ign"
+  storage_account_name   = azurerm_storage_account.ignition.name
+  storage_container_name = azurerm_storage_container.ignition.name
+  type                   = "Block"
+  depends_on = [
+    null_resource.create_ignition_configs
+  ]
+}
+
+resource "azurerm_storage_blob" "ignition-worker" {
+  name                   = "worker.ign"
+  source                 = "${var.install_path}/worker.ign"
+  storage_account_name   = azurerm_storage_account.ignition.name
+  storage_container_name = azurerm_storage_container.ignition.name
+  type                   = "Block"
+  depends_on = [
+    null_resource.create_ignition_configs
+  ]
+}
+
+data "ignition_config" "master_redirect" {
+  replace {
+    source = "${azurerm_storage_blob.ignition-master.url}${data.azurerm_storage_account_sas.ignition.sas}"
+  }
+}
+
+data "ignition_config" "bootstrap_redirect" {
+  replace {
+    source = "${azurerm_storage_blob.ignition-bootstrap.url}${data.azurerm_storage_account_sas.ignition.sas}"
+  }
+}
+
+data "ignition_config" "worker_redirect" {
+  replace {
+    source = "${azurerm_storage_blob.ignition-worker.url}${data.azurerm_storage_account_sas.ignition.sas}"
+  }
+}

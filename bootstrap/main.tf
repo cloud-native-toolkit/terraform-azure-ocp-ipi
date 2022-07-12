@@ -37,7 +37,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
     size                            = var.vm_size
     source_image_id                 = var.vm_image
     computer_name                   = "${var.name_prefix}-${var.cluster_id}-bootstrap-vm"
-    #custom_data                     = base64encode(var.ignition)
+    custom_data                     = base64encode(var.ignition)
 
     // Password is not actually used as the OS will be overwritten
     admin_username                  = "core"
