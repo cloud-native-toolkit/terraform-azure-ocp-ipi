@@ -114,13 +114,30 @@ resource "null_resource" "generate_manifests" {
     local_file.install_config
   ]
 
+  triggers = {
+    binary_path = module.setup_clis.bin_dir
+    install_path = var.install_path
+  }
+
   provisioner "local-exec" {
+    when = create
+    
     command = "${path.module}/scripts/generate-manifests.sh"
 
     environment = {
-      BIN_DIR = module.setup_clis.bin_dir
-      INSTALL_DIR = var.install_path
+      BIN_DIR = "${self.triggers.binary_path}"
+      INSTALL_DIR = "${self.triggers.install_path}"
      }
+  }
+
+  provisioner "local-exec" {
+    when = destroy
+
+    command = "${path.module}/scripts/destroy-manifests.sh"
+
+    environment = {
+      INSTALL_DIR = "${self.triggers.install_path}" 
+    }
   }
 }
 
@@ -174,7 +191,7 @@ resource "local_file" "cloud-provider-config" {
     NSG_NAME                    = var.nsg_name
     CLUSTER_INFRA_NAME          = var.cluster_infra_name
   })
-  filename = "${var.install_path}/manifests/cloud-provider-config.yml"
+  filename = "${var.install_path}/manifests/cloud-provider-config.yaml"
   file_permission = "0664"
 }
 
@@ -262,15 +279,34 @@ resource "null_resource" "create_ignition_configs" {
     local_file.cloud-credentials-secret
   ]
 
+  triggers = {
+    binary_path = module.setup_clis.bin_dir
+    install_path = var.install_path
+    cluster_infra_name = var.cluster_infra_name
+  }
+
   provisioner "local-exec" {
+    when = create
+
     command = "${path.module}/scripts/create-ignition.sh"
 
     environment = {
-      BIN_DIR = module.setup_clis.bin_dir
-      INSTALL_PATH = var.install_path
-      CLUSTER_INFRA_NAME = var.cluster_infra_name
-     }
+      BIN_DIR = "${self.triggers.binary_path}"
+      INSTALL_PATH = "${self.triggers.install_path}"
+      CLUSTER_INFRA_NAME = "${self.triggers.cluster_infra_name}"
+    }
   }
+
+  provisioner "local-exec" {
+    when = destroy
+    
+    command = "${path.module}/scripts/destroy-ignition.sh"
+
+    environment = {
+      INSTALL_PATH = "${self.triggers.install_path}"
+    }
+  }
+
 }
 
 // Read ignition content for bootstrap activities
