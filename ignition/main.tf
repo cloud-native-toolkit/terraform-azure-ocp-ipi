@@ -316,9 +316,9 @@ resource "azurerm_storage_blob" "ignition-bootstrap" {
   storage_account_name   = azurerm_storage_account.ignition.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "Block"
-  depends_on = [
-    null_resource.create_ignition_configs
-  ]
+  #depends_on = [
+  #  null_resource.create_ignition_configs
+  #]
 }
 
 resource "azurerm_storage_blob" "ignition-master" {
@@ -327,9 +327,9 @@ resource "azurerm_storage_blob" "ignition-master" {
   storage_account_name   = azurerm_storage_account.ignition.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "Block"
-  depends_on = [
-    null_resource.create_ignition_configs
-  ]
+  #depends_on = [
+  #  null_resource.create_ignition_configs
+  #]
 }
 
 resource "azurerm_storage_blob" "ignition-worker" {
@@ -338,9 +338,9 @@ resource "azurerm_storage_blob" "ignition-worker" {
   storage_account_name   = azurerm_storage_account.ignition.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "Block"
-  depends_on = [
-    null_resource.create_ignition_configs
-  ]
+  #depends_on = [
+  #  null_resource.create_ignition_configs
+  #]
 }
 
 data "ignition_config" "master_redirect" {

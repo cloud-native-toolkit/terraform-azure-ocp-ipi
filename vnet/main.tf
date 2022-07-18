@@ -164,7 +164,7 @@ module "public_lb" {
     outbound_rule           = false    
     use_ipv4                = true
     use_ipv6                = false
-    dns_label               = "${var.name_prefix}-aro"
+    dns_label               = "${var.name_prefix}-${var.cluster_id}"
     create_fqdn             = true 
 
     lb_rules = [{

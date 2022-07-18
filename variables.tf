@@ -236,6 +236,12 @@ variable "vnet_cidrs" {
     default     = ["10.0.0.0/16"]
 }
 
+variable "ssh_key" {
+    description = "Existing public SSH key to use"
+    type        = string
+    default     = ""
+}
+
 variable "ssh_key_name" {
     description = "Name for the SSH keys that are created to access the OpenShift cluster (default = openshift_rsa)"
     type        = string

@@ -63,6 +63,11 @@ output "internal_lb_id" {
     description = "ID of the internal load balancer"
 }
 
+output "internal_lb_ip" {
+    value = module.internal_lb.internal_ip_address_v4
+    description = "Internal VNet IP address of the internal load balancer"
+}
+
 output "internal_lb_backend_pool_id" {
     value = module.internal_lb.backend_pool_id_v4
     description = "ID of the internal load balancer backend pool"
@@ -76,4 +81,9 @@ output "public_lb_id" {
 output "public_lb_backend_pool_id" {
     value = module.public_lb.backend_pool_id_v4
     description = "ID of the public load balancer backend pool"
+}
+
+output "public_lb_fqdn" {
+    value = module.public_lb.public_fqdn_v4
+    description = "FQDN of the public IP of the public load balancer"
 }

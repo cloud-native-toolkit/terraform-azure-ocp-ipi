@@ -21,7 +21,7 @@ locals {
   pull_secret       = var.pull_secret_file != "" ? "${chomp(file(var.pull_secret_file))}" : var.pull_secret
   cluster_type      = "openshift"
   cluster_type_code = "ocp4"
-  cluster_version   = "${data.external.oc_info.result.serverVersion}_openshift"
+  // cluster_version   = "${data.external.oc_info.result.serverVersion}_openshift"
 }
 
 // Construct the cluster_id to uniquely identify the cluster even if the same name_prefix is provided
@@ -61,15 +61,17 @@ data "azurerm_resource_group" "network" {
   name = module.vnet.network_resource_group_name
 }
 
-// Create a set of SSH keys for access to the cluster
+// Create a set of SSH keys for access to the cluster if not provided
 module "ssh_keys" {
   source = "github.com/cloud-native-toolkit/terraform-azure-ssh-key"
 
+  count = var.ssh_key == "" ? 1 : 0
+
   key_name            = var.ssh_key_name
-  resource_group_name = module.vnet.resource_group_name
-  region              = var.region
-  store_path          = local.install_path
+  store_path          = "${local.install_path}/artifacts"
   store_key_in_vault  = false
+  algorithm           = "RSA"
+  rsa_bits            = 4096
 }
 
 // Create user assigned identity and give permissions
@@ -111,7 +113,7 @@ data "http" "images" {
 }
 
 resource "azurerm_storage_container" "vhd" {
-  name                  = "vhd${var.name_prefix}-${local.cluster_id}"
+  name                  = "vhd"
   storage_account_name  = azurerm_storage_account.cluster.name
 }
 
@@ -176,7 +178,7 @@ module "ignition" {
   outbound_type               = var.outbound_type
   pull_secret                 = local.pull_secret
   enable_fips                 = var.enable_fips
-  public_ssh_key              = chomp(module.ssh_keys.pub_key)
+  public_ssh_key              = var.ssh_key == "" ? chomp(module.ssh_keys[0].pub_key) : file(var.ssh_key)
   subscription_id             = var.subscription_id
   client_id                   = var.client_id
   client_secret               = var.client_secret
@@ -193,7 +195,7 @@ module "bootstrap" {
   region              = var.region
   resource_group_name = module.vnet.resource_group_name
   subnet_id           = module.vnet.master_subnet_id
-  public_lb_pool_id   = module.vnet.public_lb_id
+  public_lb_pool_id   = module.vnet.public_lb_backend_pool_id
   internal_lb_pool_id = module.vnet.internal_lb_backend_pool_id
   nsg_name            = module.vnet.nsg_name
   vm_size             = var.bootstrap_type
@@ -201,10 +203,45 @@ module "bootstrap" {
   identity            = azurerm_user_assigned_identity.cluster.id
   storage_account     = azurerm_storage_account.cluster
   outbound_udr        = var.outbound_type == "LoadBalancer" ? false : true
+  ignition            = module.ignition.bootstrap_ignition
+}
+
+// Create DNS entries for API
+module "dns" {
+  source = "./dns"
+
+  cluster_name = local.cluster_name
+  base_domain = local.base_domain
+  domain_resource_group_name = var.domain_resource_group_name 
+  cluster_infra_name = "${local.cluster_name}-${local.cluster_id}"
+  resource_group_name = module.vnet.resource_group_name
+  virtual_network_id = module.vnet.vnet_id
+  internal_lb_ip = module.vnet.internal_lb_ip
+  external_lb_fqdn = module.vnet.public_lb_fqdn
+}
+
+// Create master VMs
+module "masters" {
+  source = "./masters"
+
+  node_qty            = var.master_node_qty
+  cluster_infra_name  = "${var.name_prefix}-${local.cluster_id}"
+  resource_group_name = module.vnet.resource_group_name
+  region              = var.region
+  subnet_id           = module.vnet.master_subnet_id
+  public_lb_pool_id   = module.vnet.public_lb_backend_pool_id
+  internal_lb_pool_id = module.vnet.internal_lb_backend_pool_id
+  availability_zones  = var.master_availability_zones
+  master_node_type    = var.master_node_type
+  ignition            = module.ignition.master_ignition
+  vm_image            = azurerm_image.cluster.id
+  identity            = azurerm_user_assigned_identity.cluster.id
+  storage_account     = azurerm_storage_account.cluster
 }
 
 // Run openshift-installer
 
+/*
 resource "null_resource" "openshift-install" {
   depends_on = [
     local_file.install_config,
@@ -245,3 +282,4 @@ data external "oc_info" {
     kubeconfig_file = "${local.install_path}/auth/kubeconfig"
   }
 }
+*/
