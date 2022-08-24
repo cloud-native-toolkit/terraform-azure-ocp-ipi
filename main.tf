@@ -106,7 +106,7 @@ resource "azurerm_storage_account" "cluster" {
 
 // Create the VM image
 data "http" "images" {
-  url = "https://raw.githubusercontent.com/openshift/installer/release-${local.major_version}/data/data/rhcos.json"
+  url = "https://raw.githubusercontent.com/openshift/installer/release-${local.major_version}/data/data/coreos/rhcos.json"
   request_headers = {
     Accept = "application/json"
   }
@@ -224,6 +224,11 @@ module "dns" {
 module "masters" {
   source = "./masters"
 
+  depends_on = [
+    module.dns,
+    module.bootstrap
+  ]
+
   node_qty            = var.master_node_qty
   cluster_infra_name  = "${var.name_prefix}-${local.cluster_id}"
   resource_group_name = module.vnet.resource_group_name
@@ -241,7 +246,6 @@ module "masters" {
 
 // Run openshift-installer
 
-/*
 resource "null_resource" "openshift-install" {
   depends_on = [
     local_file.install_config,
@@ -282,4 +286,3 @@ data external "oc_info" {
     kubeconfig_file = "${local.install_path}/auth/kubeconfig"
   }
 }
-*/
